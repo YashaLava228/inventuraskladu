@@ -546,6 +546,15 @@ export default function App() {
             {t.historyTab}
           </button>
 
+          <button
+  onClick={() => setActiveTab('temperatures')}
+  className={`px-4 py-2 rounded-xl text-sm font-bold transition-all ${
+    activeTab === 'temperatures' ? 'bg-[#9d1c6a] text-white' : 'text-slate-400 hover:text-white'
+  }`}
+>
+  Teploty & Kontrola
+</button>
+
           {currentUser.role === 'admin' && (
             <button
               onClick={() => setActiveTab('users')}
@@ -841,7 +850,7 @@ export default function App() {
             )}
           </div>
         )}
-
+{activeTab === 'temperatures' && <TemperatureMonitor />}
         {/* ВКЛАДКА: КОРИСТУВАЧІ */}
         {activeTab === 'users' && currentUser.role === 'admin' && (
           <div className="bg-[#210f27] p-5 rounded-3xl border border-[#9d1c6a]/30 space-y-4">
