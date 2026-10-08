@@ -1,10 +1,10 @@
-import TemperatureMonitor from './TemperatureMonitor';
+import { TemperatureMonitor } from './TemperatureMonitor';
 import React, { useState, useEffect } from 'react';
 import { 
   Plus, Minus, Search, AlertTriangle, Settings, 
   Globe, UserCheck, Shield, Send, Trash2, LogOut, Key, User,
   History, Users, ShieldAlert, Layers, Filter, Warehouse,
-  Package, Barcode, Tag, Box
+  Package, Barcode, Tag, Box, Thermometer
 } from 'lucide-react';
 import { initialItems } from './itemsData';
 
