@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Calendar as CalendarIcon, Thermometer, AlertTriangle, CheckCircle, Plus, FileSpreadsheet, TrendingUp } from 'lucide-react';
+import { Calendar as CalendarIcon, ThermometerIcon, AlertTriangle, CheckCircle, Plus, FileSpreadsheet, TrendingUp } from 'lucide-react';
 
 // Норми температур
 const LIMITS = {
