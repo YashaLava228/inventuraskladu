@@ -1,11 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import {
   Globe, Settings as SettingsIcon, Shield, Users, Warehouse as WarehouseIcon,
-  History as HistoryIcon, Thermometer, Send, CheckCircle, AlertTriangle,
+  History as HistoryIcon, ThermometerIcon, Send, CheckCircle, AlertTriangle,
   Search, Plus, FileSpreadsheet, TrendingUp, Calendar as CalendarIcon,
   Trash2, Edit, Save, X, Lock, Unlock, RefreshCw
 } from 'lucide-react';
 
+const ThermometerIcon = ({ className }) => (
+  <svg className={className} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M14 4v10.54a4 4 0 1 1-4 0V4a2 2 0 0 1 4 0Z" />
+  </svg>
+);
 // ==========================================
 // 1. МОВНІ СЛОВНИКИ (i18n)
 // ==========================================
