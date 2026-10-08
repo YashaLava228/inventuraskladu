@@ -306,7 +306,7 @@ const translations = {
 
     usersTab: 'Users',
 
-    stockTab: 'Stock Shelves',
+    stockTab: 'Stock ',
 
     allWeights: 'All weights',
 
@@ -738,17 +738,15 @@ export default function App() {
 
 
 
-  const filteredItems = items.filter(item => {
-
-    const matchesSearch = item.name.toLowerCase().includes(search.toLowerCase());
-
-    const matchesCat = selectedCategory === 'all' || item.category === selectedCategory;
-
-    const matchesWeight = selectedWeight === 'all' || item.weight === selectedWeight;
-
-    return matchesSearch && matchesCat && matchesWeight;
-
-  });
+ const filteredItems = items.filter(item => {
+  const matchesSearch = item.name.toLowerCase().includes(search.toLowerCase());
+  const matchesCat = selectedCategory === 'all' || item.category === selectedCategory;
+  
+  // Якщо вибрано 'all' АБО якщо у елемента немає ваги / 'N/A', він проходить перевірку
+  const matchesWeight = selectedWeight === 'all' || item.weight === selectedWeight || item.weight === 'N/A' || !item.weight;
+  
+  return matchesSearch && matchesCat && matchesWeight;
+});
 
 
 
@@ -767,6 +765,8 @@ export default function App() {
     { key: 'louie-konzervy', code: 'C-03', title: t.louieKonzervy, items: filteredItems.filter(i => i.category === 'louie-konzervy') },
 
     { key: 'ontario', code: 'D-04', title: t.ontario, items: filteredItems.filter(i => i.category === 'ontario') },
+
+    { key: 'ostatni', code: 'E-05', title: t.ostatni || 'Ostatní', items: filteredItems.filter(i => i.category === 'ostatni') },
 
   ];
 
