@@ -4,6 +4,7 @@ export const initialItems = [
   { id: 'BOX-02', name: 'Krabice LOUIE 300g', category: 'boxes', weight: '300g', unit: 'pal', quantity: 10, minLimit: 2 },
   { id: 'BOX-03', name: 'Krabice Ontario / Wild Balance 200g', category: 'boxes', weight: '200g', unit: 'pal', quantity: 10, minLimit: 2 },
   { id: 'BOX-04', name: 'Krabice Wild Balance 400g', category: 'boxes', weight: '400g', unit: 'pal', quantity: 10, minLimit: 2 },
+  { id: 'BOX-05', name: 'Krabice Wild Balance 85g', category: 'boxes', weight: '85g', unit: 'pal', quantity: 10, minLimit: 2 },
 
   // --- LOUIE KAPSIČKY (коробки - krab) ---
   { id: 'LOU 15001', name: 'LOU 15001 | LOUIE kapsička kuřecí s cuketou 150 g', category: 'louie-kapsicky', weight: '150g', unit: 'krab', quantity: 50, minLimit: 10 },
@@ -84,5 +85,16 @@ export const initialItems = [
   { id: '214-860026', name: '214-860026 | Ontario Adult monoprotein krůtí batáty 400g (Etikety)', category: 'ontario', weight: '400g', unit: 'bal', quantity: 20, minLimit: 5 },
   { id: '214-860033', name: '214-860033 | Ontario Adult monoprotein jehněčí rýže 400g (Etikety)', category: 'ontario', weight: '400g', unit: 'bal', quantity: 20, minLimit: 5 },
   { id: '214-860040', name: '214-860040 | Ontario Adult monoprotein hovězí mrkev 400g (Etikety)', category: 'ontario', weight: '400g', unit: 'bal', quantity: 20, minLimit: 5 },
-  { id: '214-860057', name: '214-860057 | Ontario Adult monoprotein kachní dýně 400g (Etikety)', category: 'ontario', weight: '400g', unit: 'bal', quantity: 20, minLimit: 5 }
+  { id: '214-860057', name: '214-860057 | Ontario Adult monoprotein kachní dýně 400g (Etikety)', category: 'ontario', weight: '400g', unit: 'bal', quantity: 20, minLimit: 5 },
+
+  // --- OSTATNÍ / TECHNICKÝ MATERIÁL (інше) ---
+  { id: 'MAT-01', name: 'Lepidlo', category: 'ostatni', weight: 'N/A', unit: 'ks', quantity: 10, minLimit: 2 },
+  { id: 'MAT-02', name: 'Inkoust', category: 'ostatni', weight: 'N/A', unit: '%', quantity: 100, minLimit: 70 },
+  { id: 'MAT-03', name: 'Plyn - Zásobník 1', category: 'ostatni', weight: 'N/A', unit: '%', quantity: 100, minLimit: 20 },
+  { id: 'MAT-04', name: 'Plyn - Zásobník 2', category: 'ostatni', weight: 'N/A', unit: '%', quantity: 100, minLimit: 20 },
+  { id: 'MAT-05', name: 'Europalety', category: 'ostatni', weight: 'N/A', unit: 'ks', quantity: 50, minLimit: 10 },
+  { id: 'MAT-06', name: 'Standardní palety', category: 'ostatni', weight: 'N/A', unit: 'ks', quantity: 50, minLimit: 10 },
+  { id: 'MAT-07', name: 'Fólie pro baličku', category: 'ostatni', weight: 'N/A', unit: 'ks', quantity: 10, minLimit: 2 },
+  { id: 'MAT-08', name: 'Ruční fólie', category: 'ostatni', weight: 'N/A', unit: 'ks', quantity: 10, minLimit: 2 },
+  { id: 'MAT-09', name: 'Sůl do autoklávu', category: 'ostatni', weight: 'N/A', unit: 'ks', quantity: 20, minLimit: 5 }
 ];
