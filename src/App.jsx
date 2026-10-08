@@ -1,3 +1,4 @@
+import TemperatureMonitor from './TemperatureMonitor';
 import React, { useState, useEffect } from 'react';
 import { 
   Plus, Minus, Search, AlertTriangle, Settings, 
