@@ -81,7 +81,10 @@ const translations = {
     totalStock: 'Celkem položek',
     totalItems: 'Aktivní SKU',
     lowStockAlerts: 'Kritické položky',
-    shelfPrefix: 'REGÁL'
+    shelfPrefix: 'REGÁL',
+    temperaturesTab: 'Teploty & Kontrola',
+    calendarGridNotice: 'Zde se zobrazuje mřížka měsíce pro rychlý přehled po dnech.',
+    calendarGridSubNotice: 'Kliknutím na libovolný den otevřete seznam kontrol za 3 směny.',
   },
   ua: {
     title: 'LOUIE СкладОблік',
@@ -120,7 +123,10 @@ const translations = {
     totalStock: 'Всього матеріалів',
     totalItems: 'Активні SKU',
     lowStockAlerts: 'Критичні залишки',
-    shelfPrefix: 'СТЕЛАЖ'
+    shelfPrefix: 'СТЕЛАЖ',
+    temperaturesTab: 'Теплота & Контроль',
+    calendarGridNotice: 'Тут рендериться сітка місяця для швидкого перегляду по днях.',
+    calendarGridSubNotice: 'Можна клікнути на будь-який день, щоб відкрити список перевірок за 3 зміни.'
   },
   en: {
     title: 'LOUIE StockTracker',
