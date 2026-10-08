@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   Globe, Settings as SettingsIcon, Shield, Users, Warehouse as WarehouseIcon,
-  History as HistoryIcon, ThermometerIcon, Send, CheckCircle, AlertTriangle,
+  History as HistoryIcon, Thermometer, Send, CheckCircle, AlertTriangle,
   Search, Plus, FileSpreadsheet, TrendingUp, Calendar as CalendarIcon,
   Trash2, Edit, Save, X, Lock, Unlock, RefreshCw
 } from 'lucide-react';
