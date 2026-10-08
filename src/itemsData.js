@@ -1,16 +1,4 @@
 export const initialItems = [
-  // --- ВИРОБНИЧІ ТА МОНІТОРИНГОВІ ПОЗИЦІЇ ---
-  { id: 'PROD-01', name: 'Клей', category: 'production', unit: 'ks' },
-  { id: 'PROD-02', name: 'Чорнило', category: 'production', unit: '%' },
-  { id: 'PROD-03', name: 'Газ (Резервуар 1)', category: 'production', unit: '%' },
-  { id: 'PROD-04', name: 'Газ (Резервуар 2)', category: 'production', unit: '%' },
-  { id: 'PROD-05', name: 'Європалети', category: 'production', unit: 'ks' },
-  { id: 'PROD-06', name: 'Звичайні палети', category: 'production', unit: 'ks' },
-  { id: 'PROD-07', name: 'Фолія для балічки', category: 'production', unit: 'ks' },
-  { id: 'PROD-08', name: 'Фолія ручна', category: 'production', unit: 'ks' },
-  { id: 'PROD-09', name: 'Солі до автоклаву', category: 'production', unit: 'ks' },
-  { id: 'PROD-10', name: 'Коробки Wild Balance 85g', category: 'production', unit: 'ks' },
-
   // --- KRABICE A OBALY (палети - pal) ---
   { id: 'BOX-01', name: 'Krabice LOUIE 150g', category: 'boxes', weight: '150g', unit: 'pal', quantity: 10, minLimit: 2 },
   { id: 'BOX-02', name: 'Krabice LOUIE 300g', category: 'boxes', weight: '300g', unit: 'pal', quantity: 10, minLimit: 2 },
