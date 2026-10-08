@@ -287,8 +287,8 @@ export default function TemperatureMonitor() {
       {/* 3. КАЛЕНДАРНИЙ СТАН */}
       {activeTab === 'calendar' && (
         <div className="bg-[#210f27] border border-[#9d1c6a]/30 rounded-2xl p-6 text-center text-slate-400">
-          <p className="mb-2">🗓️ Тут рендериться сітка місяця для швидкого перегляду по днях.</p>
-          <p className="text-xs text-slate-500">Можна клікнути на будь-який день, щоб відкрити список перевірок за 3 зміни.</p>
+         <p className="mb-2">🗓️ Zde se zobrazuje měsíční mřížka pro rychlý přehled po dnech.</p>
+          <p className="text-xs text-slate-500">Kliknutím na libovolný den otevřete seznam kontrol za 3 směny.</p>
         </div>
       )}
     </div>
