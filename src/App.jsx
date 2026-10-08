@@ -552,13 +552,19 @@ export default function App() {
             {t.historyTab}
           </button>
 
-          <button
+     <button
   onClick={() => setActiveTab('temperatures')}
-  className={`px-4 py-2 rounded-xl text-sm font-bold transition-all ${
-    activeTab === 'temperatures' ? 'bg-[#9d1c6a] text-white' : 'text-slate-400 hover:text-white'
+  className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 ${
+    activeTab === 'temperatures'
+      ? 'bg-[#9d1c6a] text-white shadow-md'
+      : 'bg-[#150a18] text-slate-400 hover:text-white border border-[#9d1c6a]/20'
   }`}
 >
-  Teploty & Kontrola
+  <div className="flex items-center gap-1">
+    <Thermometer className="w-4 h-4" />
+    <Search className="w-3.5 h-3.5" />
+  </div>
+  <span>{t.temperaturesTab}</span>
 </button>
 
           {currentUser.role === 'admin' && (
