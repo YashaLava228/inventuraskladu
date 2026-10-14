@@ -124,69 +124,80 @@ export default function CloudApp() {
 
   const [scannerOpen, setScannerOpen] = useState(false);
   const [scanInput, setScanInput] = useState('');
-  const videoRef = React.useRef(null);
-  const stopScanRef = React.useRef(() => {});
+  const [scannerError, setScannerError] = useState('');
+  const scannerRef = React.useRef(null);
+  const startingRef = React.useRef(false);
+  const scanHandledRef = React.useRef(false);
 
-  function resolveCode(code) {
-    const value = code.trim();
-    if (!value) return;
+  function resolveCode(raw) {
+    const value = String(raw || '').trim();
+    if (!value || scanHandledRef.current) return;
+    scanHandledRef.current = true;
     setSearch(value);
     setScannerOpen(false);
-    const match = products.find(p => String(p.barcode || '').trim() === value || p.id.trim() === value);
-    setNotice(match ? 'Знайдено: ' + match.name : 'Код ' + value + ' не знайдено. Перевірте відповідність коду товару.');
+    const normalized = value.toUpperCase().replace(/\s+/g, '');
+    const match = products.find(p =>
+      [p.barcode, p.id].some(code => String(code || '').toUpperCase().replace(/\s+/g, '') === normalized)
+    );
+    setNotice(match ? 'Знайдено: ' + match.name : 'Код ' + value + ' не знайдено. Потрібно зв’язати штрихкод з артикулом.');
   }
 
   useEffect(() => {
     if (!scannerOpen) return;
-    let alive = true;
-    let stream = null;
-    let timer = null;
-    stopScanRef.current = () => {
-      alive = false;
-      if (timer) clearTimeout(timer);
-      stream?.getTracks().forEach(track => track.stop());
-      if (videoRef.current) videoRef.current.srcObject = null;
-    };
-
-    (async () => {
+    let canceled = false;
+    scanHandledRef.current = false;
+    setScannerError('');
+    async function open() {
       try {
-        if (!navigator.mediaDevices?.getUserMedia) throw new Error('Доступ до камери недоступний');
-        stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' } }, audio: false });
-        if (!alive) { stream.getTracks().forEach(track => track.stop()); return; }
-        const video = videoRef.current;
-        if (!video) return;
-        video.srcObject = stream;
-        await video.play();
-        if (!('BarcodeDetector' in window)) {
-          setNotice('Камера працює, але браузер не підтримує автоматичне розпізнавання. Введіть код вручну. Підтримку інших браузерів додамо окремо.');
-          return;
+        // Use a JS-based decoder rather than Safari's unavailable BarcodeDetector API.
+        if (!window.Html5Qrcode) {
+          await new Promise((resolve, reject) => {
+            const script = document.createElement('script');
+            script.src = 'https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js';
+            script.async = true;
+            script.onload = resolve;
+            script.onerror = () => reject(new Error('Не вдалося завантажити бібліотеку сканера'));
+            document.head.appendChild(script);
+          });
         }
-        const detector = new window.BarcodeDetector();
-        const tick = async () => {
-          if (!alive) return;
-          try {
-            if (video.readyState >= 2) {
-              const results = await detector.detect(video);
-              if (results?.length) {
-                stopScanRef.current();
-                resolveCode(results[0].rawValue);
-                return;
-              }
-            }
-          } catch (err) { console.warn('Barcode scan frame failed', err); }
-          if (alive) timer = setTimeout(tick, 250);
-        };
-        tick();
+        if (canceled) return;
+        if (!window.Html5Qrcode) throw new Error('Бібліотека сканера недоступна');
+        const scanner = new window.Html5Qrcode('cloud-barcode-reader', { verbose: false });
+        scannerRef.current = scanner;
+        startingRef.current = true;
+        await scanner.start(
+          { facingMode: 'environment' },
+          { fps: 10, qrbox: { width: 220, height: 130 }, disableFlip: false },
+          result => resolveCode(result),
+          () => {}
+        );
+        startingRef.current = false;
+        if (canceled) {
+          await scanner.stop().catch(() => {});
+          scanner.clear();
+        }
       } catch (err) {
-        if (alive) setError('Не вдалося запустити камеру: ' + err.message);
-        stream?.getTracks().forEach(track => track.stop());
+        startingRef.current = false;
+        if (!canceled) setScannerError('Камера не запустилась: ' + (err?.message || String(err)));
       }
-    })();
-    return () => stopScanRef.current();
+    }
+    open();
+    return () => {
+      canceled = true;
+      const scanner = scannerRef.current;
+      scannerRef.current = null;
+      if (scanner) {
+        Promise.resolve().then(async () => {
+          try {
+            if (scanner.getState?.() === 2) await scanner.stop();
+          } catch (err) { console.warn('Scanner cleanup', err); }
+          try { scanner.clear(); } catch (err) { console.warn('Scanner clear', err); }
+        });
+      }
+    };
   }, [scannerOpen]);
 
   function closeScanner() {
-    stopScanRef.current();
     setScannerOpen(false);
   }
 
@@ -204,9 +215,10 @@ export default function CloudApp() {
             <h2 className="text-xl font-bold">Сканування штрихкоду</h2>
             <p className="text-sm text-gray-300">Наведи камеру на код етикетки. Якщо сканування недоступне, введи код нижче.</p>
             <div className="relative rounded-xl overflow-hidden aspect-video bg-black">
-              <video ref={videoRef} muted playsInline autoPlay className="h-full w-full object-cover"/>
+              <div id="cloud-barcode-reader" className="w-full h-full"/>
               <div className="absolute inset-[20%] border-2 border-fuchsia-400 rounded-xl pointer-events-none"/>
             </div>
+            {scannerError && <p role="alert" className="text-amber-300 text-sm">{scannerError}. Перевірте дозвіл камери в Safari → Налаштування вебсайту.</p>}
             <form onSubmit={e=>{e.preventDefault();resolveCode(scanInput)}} className="flex gap-2">
               <input className={css.input} value={scanInput} onChange={e=>setScanInput(e.target.value)} placeholder="Ввести код вручну" autoFocus/>
               <button type="submit" className={css.button}>Знайти</button>
@@ -228,7 +240,7 @@ export default function CloudApp() {
           {view === 'stock' ? <>
             <div className="flex gap-2 items-center">
               <div className="relative grow"><Search size={18} className="absolute top-3.5 left-3 text-gray-400"/><input className={join(css.input,'pl-10')} placeholder="Назва, код або штрихкод" value={search} onChange={e=>setSearch(e.target.value)}/></div>
-              <button className={css.button} title="Сканувати" onClick={()=>{setError("");setScanInput("");setScannerOpen(true)}}><ScanLine/></button>
+              <button className={css.button} title="Сканувати" onClick={()=>{setError("");setScanInput("");setScannerError("");setScannerOpen(true)}}><ScanLine/></button>
             </div>
             {products.length === 0 && !busy && <p className="text-amber-300">База поки порожня. Перед імпортом перевіримо умовні кількості.</p>}
             <div className="grid gap-3">
