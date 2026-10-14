@@ -67,6 +67,7 @@ export default function CloudApp() {
   const [view, setView] = useState('dashboard');
   const [staff, setStaff] = useState([]);
   const [staffLoading, setStaffLoading] = useState(false);
+  const [generatedInvite, setGeneratedInvite] = useState('');
   const [category, setCategory] = useState('all');
   const [selectedProductId, setSelectedProductId] = useState(null);
   const [operationType, setOperationType] = useState('set');
@@ -93,14 +94,33 @@ export default function CloudApp() {
     const a = document.createElement('a'); a.href = localUrl; a.download = 'Alemar_LOUIE_stock_' + new Date().toISOString().slice(0,10) + '.csv';
     document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(localUrl),1000);
   };
+  async function staffAction(action,user_id) {
+    const data=await request('/functions/v1/worker-admin',{method:'POST',body:{action,user_id}});
+    return data;
+  }
   async function loadStaff() {
     if (profile?.role !== 'admin') return;
-    setStaffLoading(true);
+    setStaffLoading(true); setError('');
     try {
-      const rows = await request('/rest/v1/profiles?select=id,name,role&order=name.asc');
-      setStaff(rows || []);
+      const data=await staffAction('list');
+      setStaff(data.users||[]);
     } catch(e) { setError(e.message); }
     finally { setStaffLoading(false); }
+  }
+  async function createInvite() {
+    setStaffLoading(true);setError('');setGeneratedInvite('');
+    try {
+      const data=await staffAction('invite');
+      setGeneratedInvite(data.invitation_code);
+    } catch(e) {setError(e.message)}
+    finally {setStaffLoading(false)}
+  }
+  async function toggleStaff(person,blocked) {
+    if (!window.confirm(blocked ? tr('Opravdu zablokovat účet?','Заблокувати акаунт?','Block this account?') : tr('Obnovit přístup?','Відновити доступ?','Restore access?')))return;
+    setStaffLoading(true);setError('');
+    try {await staffAction(blocked?'disable':'enable',person.id);setNotice(tr('Změna přístupu uložena','Доступ оновлено','Access updated'));await loadStaff()}
+    catch(e){setError(e.message)}
+    finally{setStaffLoading(false)}
   }
   useEffect(() => { if (view === 'users' && profile?.role === 'admin') loadStaff(); }, [view, profile?.role]);
   function openProduct(product) {
@@ -374,9 +394,10 @@ export default function CloudApp() {
           </div>}
           {view === 'users' && profile?.role === 'admin' && <section className="rounded-2xl border border-white/10 bg-white/5 p-4 space-y-3">
             <h2 className="text-xl font-bold">{tr('Správa uživatelů','Керування працівниками','User management')}</h2>
-            <p className="text-sm text-gray-300">{tr('Přehled profilů. Pozvánky a deaktivace budou dostupné po nasazení zabezpečené administrátorské funkce.','Перегляд профілів. Запрошення та блокування стануть доступні після встановлення захищеної адмінфункції.','Profile overview. Invitations and blocking require a secure admin backend deployment.')}</p>
-            <button className={css.button} onClick={loadStaff} disabled={staffLoading}>{t.refresh}</button>
-            {staff.map(person=><div key={person.id} className="flex items-center justify-between gap-3 border border-white/10 rounded-xl p-3"><div><div className="font-semibold">{person.name || person.id}</div><div className="text-xs text-gray-400">{person.id===session.user?.id ? tr('Váš účet','Ваш акаунт','Your account') : person.id.slice(0,8)+'…'}</div></div><span className="text-xs rounded-full bg-white/10 px-3 py-1">{person.role}</span></div>)}
+            <p className="text-sm text-gray-300">{tr('Správa účtů a pozvánek vyžaduje nasazení zabezpečené funkce worker-admin.','Керування акаунтами та запрошеннями потребує встановлення захищеної функції worker-admin.','Account management requires deployment of the secure worker-admin function.')}</p>
+            <div className="flex flex-wrap gap-2"><button className={css.button} onClick={loadStaff} disabled={staffLoading}>{t.refresh}</button><button className={css.button} onClick={createInvite} disabled={staffLoading}>🔑 {tr('Nová pozvánka','Новий код запрошення','New invitation')}</button></div>
+            {generatedInvite && <div className="p-3 rounded-xl border border-amber-400 bg-amber-900/20 space-y-2"><p className="text-sm text-amber-100">{tr('Jednorázový kód platný 7 dní. Nikde ho veřejně nesdílejte.','Одноразовий код на 7 днів. Не публікуй його.','One-use code valid for 7 days. Keep it private.')}</p><code className="block break-all select-all text-lg">{generatedInvite}</code><button className={css.button} onClick={()=>navigator.clipboard?.writeText(generatedInvite)}>{tr('Kopírovat','Копіювати','Copy')}</button></div>}
+            {staff.map(person=><div key={person.id} className="flex items-center justify-between gap-3 border border-white/10 rounded-xl p-3"><div><div className="font-semibold">{person.name || person.id}</div><div className="text-xs text-gray-400">{person.id===session.user?.id ? tr('Váš účet','Ваш акаунт','Your account') : person.id.slice(0,8)+'…'}</div></div><div className="flex items-center flex-wrap gap-2"><span className="text-xs rounded-full bg-white/10 px-3 py-1">{person.role}</span>{person.role!=='admin' && <><button className="text-xs p-2 bg-red-950 rounded-lg" disabled={staffLoading} onClick={()=>toggleStaff(person,true)}>{tr('Zablokovat','Заблокувати','Block')}</button><button className="text-xs p-2 bg-white/10 rounded-lg" disabled={staffLoading} onClick={()=>toggleStaff(person,false)}>{tr('Povolit','Відновити','Enable')}</button></>}</div></div>)}
             {!staffLoading && staff.length===0 && <p className="text-sm text-gray-400">{tr('Žádné dostupné profily','Немає доступних профілів','No profiles available')}</p>}
           </section>}
           {view === 'stock' ? <>
