@@ -400,7 +400,7 @@ export default function CloudApp() {
             {staff.map(person=><div key={person.id} className="flex items-center justify-between gap-3 border border-white/10 rounded-xl p-3"><div><div className="font-semibold">{person.name || person.id}</div><div className="text-xs text-gray-400">{person.id===session.user?.id ? tr('Váš účet','Ваш акаунт','Your account') : person.id.slice(0,8)+'…'}</div></div><div className="flex items-center flex-wrap gap-2"><span className="text-xs rounded-full bg-white/10 px-3 py-1">{person.role}</span>{person.role!=='admin' && <><button className="text-xs p-2 bg-red-950 rounded-lg" disabled={staffLoading} onClick={()=>toggleStaff(person,true)}>{tr('Zablokovat','Заблокувати','Block')}</button><button className="text-xs p-2 bg-white/10 rounded-lg" disabled={staffLoading} onClick={()=>toggleStaff(person,false)}>{tr('Povolit','Відновити','Enable')}</button></>}</div></div>)}
             {!staffLoading && staff.length===0 && <p className="text-sm text-gray-400">{tr('Žádné dostupné profily','Немає доступних профілів','No profiles available')}</p>}
           </section>}
-          {view === 'stock' ? <>
+          {view === 'stock' && <>
             <div className="flex gap-2 items-center">
               <div className="relative grow"><Search size={18} className="absolute top-3.5 left-3 text-gray-400"/><input className={join(css.input,'pl-10')} placeholder={t.search} value={search} onChange={e=>setSearch(e.target.value)}/></div>
               <button className={css.button} title={t.scan} onClick={()=>{setError("");setScanInput("");setScannerError("");setScannerOpen(true)}}><ScanLine/></button>
