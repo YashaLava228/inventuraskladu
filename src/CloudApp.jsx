@@ -35,8 +35,15 @@ async function api(path, { method = 'GET', body, token } = {}) {
   return data;
 }
 
-async function signIn(email, password) {
+async function signIn(login, password) {
+  const value = login.trim();
+  const normalized = value.normalize('NFKC').toLocaleLowerCase('cs-CZ').replace(/\\s+/g, '');
+  const email = value.includes('@') ? value : normalized + '@worker.alemar.invalid';
   return api('/auth/v1/token?grant_type=password', { method: 'POST', body: { email, password } });
+}
+
+async function registerWorker(surname, password, code) {
+  return api('/functions/v1/worker-register', { method: 'POST', body: { surname, password, code } });
 }
 
 export default function CloudApp() {
@@ -45,6 +52,8 @@ export default function CloudApp() {
   useEffect(() => { localStorage.setItem(languageStorage, lang); document.documentElement.lang = lang === 'cs' ? 'cs' : lang === 'ua' ? 'uk' : 'en'; }, [lang]);
   const [session, setSession] = useState(getSession);
   const [email, setEmail] = useState('');
+  const [authMode, setAuthMode] = useState('login');
+  const [invitation, setInvitation] = useState('');
   const [password, setPassword] = useState('');
   const [products, setProducts] = useState([]);
   const [history, setHistory] = useState([]);
@@ -105,6 +114,16 @@ export default function CloudApp() {
   }
 
   useEffect(() => { if (session) load(); }, [session?.user?.id]);
+
+  async function register(e) {
+    e.preventDefault(); setError(''); setNotice(''); setBusy('register');
+    try {
+      await registerWorker(email, password, invitation);
+      setAuthMode('login'); setPassword(''); setInvitation('');
+      setNotice(lang === 'cs' ? 'Účet vytvořen. Nyní se přihlaste.' : lang === 'ua' ? 'Акаунт створено. Тепер увійдіть.' : 'Account created. Sign in now.');
+    } catch (e) { setError(e.message); }
+    finally { setBusy(''); }
+  }
 
   async function login(e) {
     e.preventDefault(); setBusy('login'); setError('');
@@ -283,12 +302,19 @@ export default function CloudApp() {
             <button className="w-full text-gray-300 py-2" onClick={()=>setSelectedProductId(null)}>{t.close}</button>
           </div>
         </div>}
-        {!session ? <form onSubmit={login} className="max-w-sm space-y-3 bg-white/5 rounded-2xl p-6">
-          <h2 className="text-xl font-semibold">{t.signIn}</h2>
-          <input className={css.input} type="email" required placeholder="Email" value={email} onChange={e=>setEmail(e.target.value)} />
-          <input className={css.input} type="password" required placeholder={t.password} value={password} onChange={e=>setPassword(e.target.value)} />
-          <button disabled={!!busy} className={css.button}>{t.login}</button>
-        </form> : <>
+        {!session ? <div className="max-w-sm space-y-3 bg-white/5 rounded-2xl p-6">
+          <div className="flex gap-2">
+            <button type="button" className={css.button} onClick={()=>{setAuthMode('login');setError('')}}>{t.login}</button>
+            <button type="button" className={css.button} onClick={()=>{setAuthMode('register');setError('')}}>{lang==='cs'?'Registrace':lang==='ua'?'Реєстрація':'Register'}</button>
+          </div>
+          <form onSubmit={authMode==='register' ? register : login} className="space-y-3">
+            <h2 className="text-xl font-semibold">{authMode==='register' ? (lang==='cs'?'Registrace pracovníka':lang==='ua'?'Реєстрація працівника':'Worker registration') : t.signIn}</h2>
+            <input className={css.input} type="text" autoComplete="username" required placeholder={lang==='cs'?'Příjmení nebo email admina':lang==='ua'?'Прізвище або email адміністратора':'Surname or admin email'} value={email} onChange={e=>setEmail(e.target.value)} />
+            <input className={css.input} type="password" autoComplete={authMode==='register'?'new-password':'current-password'} minLength={authMode==='register'?10:undefined} required placeholder={t.password} value={password} onChange={e=>setPassword(e.target.value)} />
+            {authMode==='register' && <><input className={css.input} type="text" required placeholder={lang==='cs'?'Pozvánkový kód':lang==='ua'?'Код запрошення':'Invitation code'} value={invitation} onChange={e=>setInvitation(e.target.value)}/><p className="text-sm text-gray-300">{lang==='cs'?'Heslo musí mít alespoň 10 znaků. Kód dostanete od správce.':lang==='ua'?'Пароль — від 10 символів. Код надає адміністратор.':'Password must be at least 10 characters. Ask the admin for an invitation code.'}</p></>}
+            <button disabled={!!busy} className={join(css.button,'w-full')}>{authMode==='register' ? (lang==='cs'?'Vytvořit účet':lang==='ua'?'Створити акаунт':'Create account') : t.login}</button>
+          </form>
+        </div> : <>
           <div className="flex gap-2 items-center flex-wrap">
             <span className="text-sm text-gray-300">{profile?.name || session.user?.email} • {profile?.role || t.noProfile}</span>
             <button className={css.button} onClick={()=>setView('stock')}>{t.products}</button>
