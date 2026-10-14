@@ -370,7 +370,14 @@ export default function App() {
 
     const saved = localStorage.getItem('louie_items');
 
-    return saved ? JSON.parse(saved) : initialItems;
+    // Migrate existing box records from pallets to pieces without changing quantities.
+    // Keep all other products and locally saved stock values untouched.
+    const storedItems = saved ? JSON.parse(saved) : initialItems;
+    return storedItems.map(item =>
+      item.category === 'boxes' && item.unit === 'pal'
+        ? { ...item, unit: 'ks' }
+        : item
+    );
 
   });
 
