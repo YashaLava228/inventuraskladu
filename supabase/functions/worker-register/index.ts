@@ -7,7 +7,7 @@ import { createClient } from 'npm:@supabase/supabase-js@2';
 const origin = Deno.env.get('PUBLIC_SITE_ORIGIN') || 'https://inventuraskladu.pages.dev';
 const headers = {
   'Access-Control-Allow-Origin': origin,
-  'Access-Control-Allow-Headers': 'content-type, authorization, apikey',
+  'Access-Control-Allow-Headers': 'content-type, authorization, apikey, prefer, x-client-info',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
   'Content-Type': 'application/json',
 };
