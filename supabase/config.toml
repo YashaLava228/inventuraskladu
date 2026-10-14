@@ -1,2 +1,5 @@
 [functions.worker-register]
 verify_jwt = false
+
+[functions.worker-admin]
+verify_jwt = false
