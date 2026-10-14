@@ -1,0 +1,2 @@
+[functions.worker-register]
+verify_jwt = false
