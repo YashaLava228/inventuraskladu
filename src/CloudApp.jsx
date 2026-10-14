@@ -122,31 +122,72 @@ export default function CloudApp() {
 
   const shown = products.filter(p => (p.name + ' ' + p.id + ' ' + (p.barcode || '')).toLocaleLowerCase().includes(search.toLocaleLowerCase()));
 
-  async function scan() {
-    if (!('BarcodeDetector' in window)) {
-      setNotice('Цей браузер не підтримує сканування камерою. Введіть артикул у пошук.');
-      return;
-    }
-    setError('');
-    let stream;
-    try {
-      stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
-      const video = document.createElement('video');
-      video.srcObject = stream; video.muted = true; video.playsInline = true;
-      await video.play();
-      const detector = new window.BarcodeDetector();
-      let found = false;
-      for (let attempt = 0; attempt < 80 && !found; attempt++) {
-        const codes = await detector.detect(video);
-        if (codes.length) {
-          setSearch(codes[0].rawValue);
-          setNotice('Скановано: ' + codes[0].rawValue);
-          found = true;
-        } else await new Promise(resolve => setTimeout(resolve, 150));
+  const [scannerOpen, setScannerOpen] = useState(false);
+  const [scanInput, setScanInput] = useState('');
+  const videoRef = React.useRef(null);
+  const stopScanRef = React.useRef(() => {});
+
+  function resolveCode(code) {
+    const value = code.trim();
+    if (!value) return;
+    setSearch(value);
+    setScannerOpen(false);
+    const match = products.find(p => String(p.barcode || '').trim() === value || p.id.trim() === value);
+    setNotice(match ? 'Знайдено: ' + match.name : 'Код ' + value + ' не знайдено. Перевірте відповідність коду товару.');
+  }
+
+  useEffect(() => {
+    if (!scannerOpen) return;
+    let alive = true;
+    let stream = null;
+    let timer = null;
+    stopScanRef.current = () => {
+      alive = false;
+      if (timer) clearTimeout(timer);
+      stream?.getTracks().forEach(track => track.stop());
+      if (videoRef.current) videoRef.current.srcObject = null;
+    };
+
+    (async () => {
+      try {
+        if (!navigator.mediaDevices?.getUserMedia) throw new Error('Доступ до камери недоступний');
+        if (!('BarcodeDetector' in window)) {
+          setNotice('Автоматичне сканування не підтримується цим браузером. Можна ввести код вручну.');
+          return;
+        }
+        stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' } }, audio: false });
+        if (!alive) { stream.getTracks().forEach(track => track.stop()); return; }
+        const video = videoRef.current;
+        if (!video) return;
+        video.srcObject = stream;
+        await video.play();
+        const detector = new window.BarcodeDetector();
+        const tick = async () => {
+          if (!alive) return;
+          try {
+            if (video.readyState >= 2) {
+              const results = await detector.detect(video);
+              if (results?.length) {
+                stopScanRef.current();
+                resolveCode(results[0].rawValue);
+                return;
+              }
+            }
+          } catch (err) { console.warn('Barcode scan frame failed', err); }
+          if (alive) timer = setTimeout(tick, 250);
+        };
+        tick();
+      } catch (err) {
+        if (alive) setError('Не вдалося запустити камеру: ' + err.message);
+        stream?.getTracks().forEach(track => track.stop());
       }
-      if (!found) setNotice('Код не знайдено, спробуйте ще раз або введіть його вручну.');
-    } catch (e) { setError('Камера недоступна: ' + e.message); }
-    finally { stream?.getTracks().forEach(track => track.stop()); }
+    })();
+    return () => stopScanRef.current();
+  }, [scannerOpen]);
+
+  function closeScanner() {
+    stopScanRef.current();
+    setScannerOpen(false);
   }
 
   return (
@@ -158,6 +199,21 @@ export default function CloudApp() {
         </header>
         {error && <div role="alert" className="p-3 rounded-lg bg-red-900/50 border border-red-500">{error}</div>}
         {notice && <div className="p-3 rounded-lg bg-emerald-900/40">{notice}</div>}
+        {scannerOpen && <div className="fixed inset-0 z-50 bg-black/85 flex justify-center items-center p-4" role="dialog" aria-modal="true" aria-label="Сканування штрихкоду">
+          <div className="w-full max-w-lg bg-[#1c1326] border border-white/20 rounded-2xl p-5 space-y-3">
+            <h2 className="text-xl font-bold">Сканування штрихкоду</h2>
+            <p className="text-sm text-gray-300">Наведи камеру на код етикетки. Якщо сканування недоступне, введи код нижче.</p>
+            <div className="relative rounded-xl overflow-hidden aspect-video bg-black">
+              <video ref={videoRef} muted playsInline autoPlay className="h-full w-full object-cover"/>
+              <div className="absolute inset-[20%] border-2 border-fuchsia-400 rounded-xl pointer-events-none"/>
+            </div>
+            <form onSubmit={e=>{e.preventDefault();resolveCode(scanInput)}} className="flex gap-2">
+              <input className={css.input} value={scanInput} onChange={e=>setScanInput(e.target.value)} placeholder="Ввести код вручну" autoFocus/>
+              <button type="submit" className={css.button}>Знайти</button>
+            </form>
+            <button className={join(css.button,'w-full')} onClick={closeScanner}>Закрити камеру</button>
+          </div>
+        </div>}
         {!session ? <form onSubmit={login} className="max-w-sm space-y-3 bg-white/5 rounded-2xl p-6">
           <h2 className="text-xl font-semibold">Вхід через Supabase Auth</h2>
           <input className={css.input} type="email" required placeholder="Email" value={email} onChange={e=>setEmail(e.target.value)} />
@@ -172,7 +228,7 @@ export default function CloudApp() {
           {view === 'stock' ? <>
             <div className="flex gap-2 items-center">
               <div className="relative grow"><Search size={18} className="absolute top-3.5 left-3 text-gray-400"/><input className={join(css.input,'pl-10')} placeholder="Назва, код або штрихкод" value={search} onChange={e=>setSearch(e.target.value)}/></div>
-              <button className={css.button} title="Сканувати" onClick={scan}><ScanLine/></button>
+              <button className={css.button} title="Сканувати" onClick={()=>{setError("");setScanInput("");setScannerOpen(true)}}><ScanLine/></button>
             </div>
             {products.length === 0 && !busy && <p className="text-amber-300">База поки порожня. Перед імпортом перевіримо умовні кількості.</p>}
             <div className="grid gap-3">
