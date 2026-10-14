@@ -237,13 +237,13 @@ export default function CloudApp() {
     <div className="min-h-screen bg-[#110b19] text-white p-4 md:p-8">
       <main className="max-w-5xl mx-auto space-y-5">
         <header className="flex flex-wrap justify-between items-center gap-3">
-          <div><h1 className="text-2xl font-bold">ALEMAR FOOD GROUP</h1><p className="text-sm font-semibold text-fuchsia-300">LOUIE · Inventura skladu</p><p className="text-xs text-gray-400">{t.subtitle}</p></div>
+          <div><h1 className="text-2xl font-bold">ALEMAR FOOD GROUP</h1><p className="text-sm font-semibold text-fuchsia-300">LOUIE · {t.cloud}</p><p className="text-xs text-gray-400">{t.subtitle}</p></div>
           <label className="flex items-center gap-2 text-sm text-gray-300"><span>🌐</span><select aria-label="Language / Jazyk" value={lang} onChange={e=>setLang(e.target.value)} className="rounded-lg border border-white/20 bg-[#24182e] text-white p-2"><option value="cs">Čeština</option><option value="ua">Українська</option><option value="en">English</option></select></label>
           {session && <div className="flex gap-2"><button className={css.button} onClick={load}> <RefreshCcw size={16} className="inline"/> {t.refresh}</button><button className={css.button} onClick={logout}><LogOut size={16} className="inline"/> {t.logout}</button></div>}
         </header>
         {error && <div role="alert" className="p-3 rounded-lg bg-red-900/50 border border-red-500">{error}</div>}
         {notice && <div className="p-3 rounded-lg bg-emerald-900/40">{notice}</div>}
-        {scannerOpen && <div className="fixed inset-0 z-50 bg-black/85 flex justify-center items-center p-4" role="dialog" aria-modal="true" aria-label="Сканування штрихкоду">
+        {scannerOpen && <div className="fixed inset-0 z-50 bg-black/85 flex justify-center items-center p-4" role="dialog" aria-modal="true" aria-label={t.scanTitle}>
           <div className="w-full max-w-lg bg-[#1c1326] border border-white/20 rounded-2xl p-5 space-y-3">
             <h2 className="text-xl font-bold">{t.scanTitle}</h2>
             <p className="text-sm text-gray-300">{t.scanHelp}</p>
@@ -259,11 +259,11 @@ export default function CloudApp() {
             <button className={join(css.button,'w-full')} onClick={closeScanner}>{t.closeCamera}</button>
           </div>
         </div>}
-        {selectedProduct && <div className="fixed inset-0 z-40 bg-black/85 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-label="Операції з товаром">
+        {selectedProduct && <div className="fixed inset-0 z-40 bg-black/85 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-label={t.open}>
           <div className="w-full max-w-lg rounded-2xl bg-[#21162d] border border-fuchsia-400/40 p-5 space-y-4 max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between gap-4 items-start">
               <div><div className="text-sm text-fuchsia-300 font-semibold">{selectedProduct.id}</div><h2 className="text-xl font-bold mt-1">{selectedProduct.name}</h2><p className="text-sm text-gray-400">{selectedProduct.category}</p></div>
-              <button className="p-2 rounded-lg bg-white/10" onClick={()=>setSelectedProductId(null)} aria-label="Закрити товар">✕</button>
+              <button className="p-2 rounded-lg bg-white/10" onClick={()=>setSelectedProductId(null)} aria-label={t.close}>✕</button>
             </div>
             <div className="bg-white/10 rounded-xl p-4 text-center">
               <p className="text-sm text-gray-300">{t.current}</p>
