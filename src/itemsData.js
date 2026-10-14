@@ -1,10 +1,10 @@
 export const initialItems = [
   // --- KRABICE A OBALY (палети - pal) ---
-  { id: 'BOX-01', name: 'Krabice LOUIE 150g', category: 'boxes', weight: '150g', unit: 'pal', quantity: 10, minLimit: 2 },
-  { id: 'BOX-02', name: 'Krabice LOUIE 300g', category: 'boxes', weight: '300g', unit: 'pal', quantity: 10, minLimit: 2 },
-  { id: 'BOX-03', name: 'Krabice Ontario / Wild Balance 200g', category: 'boxes', weight: '200g', unit: 'pal', quantity: 10, minLimit: 2 },
-  { id: 'BOX-04', name: 'Krabice Wild Balance 400g', category: 'boxes', weight: '400g', unit: 'pal', quantity: 10, minLimit: 2 },
-  { id: 'BOX-05', name: 'Krabice Wild Balance 85g', category: 'boxes', weight: '85g', unit: 'pal', quantity: 10, minLimit: 2 },
+  { id: 'BOX-01', name: 'Krabice LOUIE 150g', category: 'boxes', weight: '150g', unit: 'ks', quantity: 10, minLimit: 2 },
+  { id: 'BOX-02', name: 'Krabice LOUIE 300g', category: 'boxes', weight: '300g', unit: 'ks', quantity: 10, minLimit: 2 },
+  { id: 'BOX-03', name: 'Krabice Ontario / Wild Balance 200g', category: 'boxes', weight: '200g', unit: 'ks', quantity: 10, minLimit: 2 },
+  { id: 'BOX-04', name: 'Krabice Wild Balance 400g', category: 'boxes', weight: '400g', unit: 'ks', quantity: 10, minLimit: 2 },
+  { id: 'BOX-05', name: 'Krabice Wild Balance 85g', category: 'boxes', weight: '85g', unit: 'ks', quantity: 10, minLimit: 2 },
 
   // --- LOUIE KAPSIČKY (коробки - krab) ---
   { id: 'LOU 15001', name: 'LOU 15001 | LOUIE kapsička kuřecí s cuketou 150 g', category: 'louie-kapsicky', weight: '150g', unit: 'krab', quantity: 50, minLimit: 10 },
