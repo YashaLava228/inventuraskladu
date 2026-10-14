@@ -51,6 +51,23 @@ export default function CloudApp() {
   const [editing, setEditing] = useState(null);
   const [amount, setAmount] = useState('');
   const [view, setView] = useState('stock');
+  const [category, setCategory] = useState('all');
+  const [selectedProductId, setSelectedProductId] = useState(null);
+  const [operationType, setOperationType] = useState('set');
+  const categories = [
+    { id: 'all', title: 'Усі товари', emoji: '🏬' },
+    { id: 'boxes', title: 'Коробки та упаковка', emoji: '📦' },
+    { id: 'louie-konzervy', title: 'Етикетки LOUIE', emoji: '🏷️' },
+    { id: 'louie-kapsicky', title: 'Паучі LOUIE', emoji: '🧃' },
+    { id: 'ontario', title: 'Етикетки Ontario', emoji: '🐾' },
+    { id: 'ostatni', title: 'Інші матеріали', emoji: '🧰' }
+  ];
+  const selectedProduct = products.find(p => p.id === selectedProductId);
+  function openProduct(product) {
+    setSelectedProductId(product.id);
+    setOperationType('set');
+    setAmount(String(product.quantity));
+  }
 
   async function request(path, opts) {
     if (!session) throw new Error('Please sign in');
@@ -120,7 +137,10 @@ export default function CloudApp() {
     } finally { setBusy(''); }
   }
 
-  const shown = products.filter(p => (p.name + ' ' + p.id + ' ' + (p.barcode || '')).toLocaleLowerCase().includes(search.toLocaleLowerCase()));
+  const shown = products.filter(p =>
+    (category === 'all' || p.category === category) &&
+    (p.name + ' ' + p.id + ' ' + (p.barcode || '')).toLocaleLowerCase().includes(search.toLocaleLowerCase())
+  );
 
   const [scannerOpen, setScannerOpen] = useState(false);
   const [scanInput, setScanInput] = useState('');
@@ -133,13 +153,20 @@ export default function CloudApp() {
     const value = String(raw || '').trim();
     if (!value || scanHandledRef.current) return;
     scanHandledRef.current = true;
-    setSearch(value);
+    setSearch('');
+    setCategory('all');
     setScannerOpen(false);
     const normalized = value.toUpperCase().replace(/\s+/g, '');
     const match = products.find(p =>
       [p.barcode, p.id].some(code => String(code || '').toUpperCase().replace(/\s+/g, '') === normalized)
     );
-    setNotice(match ? 'Знайдено: ' + match.name : 'Код ' + value + ' не знайдено. Потрібно зв’язати штрихкод з артикулом.');
+    if (match) {
+      openProduct(match);
+      setNotice('Знайдено: ' + match.name);
+    } else {
+      setNotice('Код ' + value + ' не знайдено. Потрібно зв’язати штрихкод з артикулом.');
+      setSearch(value);
+    }
   }
 
   useEffect(() => {
@@ -226,6 +253,30 @@ export default function CloudApp() {
             <button className={join(css.button,'w-full')} onClick={closeScanner}>Закрити камеру</button>
           </div>
         </div>}
+        {selectedProduct && <div className="fixed inset-0 z-40 bg-black/85 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-label="Операції з товаром">
+          <div className="w-full max-w-lg rounded-2xl bg-[#21162d] border border-fuchsia-400/40 p-5 space-y-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between gap-4 items-start">
+              <div><div className="text-sm text-fuchsia-300 font-semibold">{selectedProduct.id}</div><h2 className="text-xl font-bold mt-1">{selectedProduct.name}</h2><p className="text-sm text-gray-400">{selectedProduct.category}</p></div>
+              <button className="p-2 rounded-lg bg-white/10" onClick={()=>setSelectedProductId(null)} aria-label="Закрити товар">✕</button>
+            </div>
+            <div className="bg-white/10 rounded-xl p-4 text-center">
+              <p className="text-sm text-gray-300">Поточний залишок</p>
+              <div className="text-4xl font-extrabold">{selectedProduct.quantity} <span className="text-xl text-gray-300">{selectedProduct.unit}</span></div>
+            </div>
+            <div className="grid grid-cols-3 gap-2">
+              {[{id:'add',label:'➕ Додати'},{id:'remove',label:'➖ Списати'},{id:'set',label:'✏️ Встановити'}].map(o=>
+                <button key={o.id} onClick={()=>{setOperationType(o.id);setAmount(o.id==='set' ? String(selectedProduct.quantity) : '1')}} className={'p-2.5 text-sm rounded-xl border ' + (operationType===o.id?'bg-fuchsia-700 border-fuchsia-300':'bg-white/5 border-white/20')}>{o.label}</button>
+              )}
+            </div>
+            <label className="block text-sm text-gray-300">{operationType==='set' ? 'Новий точний залишок' : operationType==='add' ? 'Скільки додати' : 'Скільки списати'} ({selectedProduct.unit})</label>
+            <input type="number" min={operationType==='set'?0:1} step="1" inputMode="numeric" className={css.input} value={amount} onChange={e=>setAmount(e.target.value)}/>
+            <button className={join(css.button,'w-full')} disabled={!!busy || amount.trim()==='' || !Number.isSafeInteger(Number(amount)) || Number(amount)<(operationType==='set'?0:1)} onClick={()=>change(selectedProduct,operationType==='set' ? Number(amount) : operationType==='add' ? Number(amount) : -Number(amount), operationType==='set'?'set':'delta')}>
+              <Save size={17} className="inline"/> Зберегти в базі
+            </button>
+            {error && <p role="alert" className="text-red-300 text-sm">{error}</p>}
+            <button className="w-full text-gray-300 py-2" onClick={()=>setSelectedProductId(null)}>Закрити</button>
+          </div>
+        </div>}
         {!session ? <form onSubmit={login} className="max-w-sm space-y-3 bg-white/5 rounded-2xl p-6">
           <h2 className="text-xl font-semibold">Вхід через Supabase Auth</h2>
           <input className={css.input} type="email" required placeholder="Email" value={email} onChange={e=>setEmail(e.target.value)} />
@@ -242,6 +293,16 @@ export default function CloudApp() {
               <div className="relative grow"><Search size={18} className="absolute top-3.5 left-3 text-gray-400"/><input className={join(css.input,'pl-10')} placeholder="Назва, код або штрихкод" value={search} onChange={e=>setSearch(e.target.value)}/></div>
               <button className={css.button} title="Сканувати" onClick={()=>{setError("");setScanInput("");setScannerError("");setScannerOpen(true)}}><ScanLine/></button>
             </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+              {categories.map(c => <button key={c.id} onClick={()=>{setCategory(c.id);setSearch('')}} className={'text-left p-3 rounded-xl border transition-colors ' + (category===c.id ? 'border-fuchsia-400 bg-fuchsia-900/50' : 'border-white/10 bg-white/5')}>
+                <span aria-hidden="true">{c.emoji}</span> <span className="font-medium">{c.title}</span>
+                <span className="block text-xs text-gray-400 mt-1">{c.id==='all' ? products.length : products.filter(p=>p.category===c.id).length} позицій</span>
+              </button>)}
+            </div>
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-bold">{categories.find(c=>c.id===category)?.title}</h2>
+              <span className="text-sm text-gray-400">{shown.length} товарів</span>
+            </div>
             {products.length === 0 && !busy && <p className="text-amber-300">База поки порожня. Перед імпортом перевіримо умовні кількості.</p>}
             <div className="grid gap-3">
             {shown.map(item => <section key={item.id} className="p-4 rounded-2xl border border-white/10 bg-white/5">
@@ -252,7 +313,7 @@ export default function CloudApp() {
               <div className="flex flex-wrap gap-2 mt-3">
                 <button disabled={!!busy} className={css.button} onClick={()=>change(item,-1,'delta')}><Minus size={16} className="inline"/> 1</button>
                 <button disabled={!!busy} className={css.button} onClick={()=>change(item,1,'delta')}><Plus size={16} className="inline"/> 1</button>
-                <button disabled={!!busy} className={css.button} onClick={()=>{setEditing(item.id);setAmount(String(item.quantity));}}>Вписати кількість</button>
+                <button disabled={!!busy} className={css.button} onClick={()=>openProduct(item)}>Відкрити товар</button>
               </div>
               {editing===item.id && <div className="flex gap-2 items-center mt-3 flex-wrap">
                 <input type="number" min="0" step="1" className={join(css.input,'max-w-36')} value={amount} onChange={e=>setAmount(e.target.value)}/>
