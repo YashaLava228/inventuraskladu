@@ -37,7 +37,7 @@ async function api(path, { method = 'GET', body, token } = {}) {
 
 async function signIn(login, password) {
   const value = login.trim();
-  const normalized = value.normalize('NFKC').toLocaleLowerCase('cs-CZ').replace(/\\s+/g, '');
+  const normalized = value.normalize('NFKC').toLocaleLowerCase('cs-CZ').replace(/\s+/g, '');
   const email = value.includes('@') ? value : normalized + '@worker.alemar.invalid';
   return api('/auth/v1/token?grant_type=password', { method: 'POST', body: { email, password } });
 }
