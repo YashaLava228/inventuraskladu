@@ -151,16 +151,16 @@ export default function CloudApp() {
     (async () => {
       try {
         if (!navigator.mediaDevices?.getUserMedia) throw new Error('Доступ до камери недоступний');
-        if (!('BarcodeDetector' in window)) {
-          setNotice('Автоматичне сканування не підтримується цим браузером. Можна ввести код вручну.');
-          return;
-        }
         stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' } }, audio: false });
         if (!alive) { stream.getTracks().forEach(track => track.stop()); return; }
         const video = videoRef.current;
         if (!video) return;
         video.srcObject = stream;
         await video.play();
+        if (!('BarcodeDetector' in window)) {
+          setNotice('Камера працює, але браузер не підтримує автоматичне розпізнавання. Введіть код вручну. Підтримку інших браузерів додамо окремо.');
+          return;
+        }
         const detector = new window.BarcodeDetector();
         const tick = async () => {
           if (!alive) return;
