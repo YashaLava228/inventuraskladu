@@ -167,7 +167,7 @@ export default function CloudApp() {
         startingRef.current = true;
         await scanner.start(
           { facingMode: 'environment' },
-          { fps: 10, qrbox: { width: 220, height: 130 }, disableFlip: false },
+          { fps: 10, disableFlip: false, videoConstraints: { facingMode: 'environment', width: { ideal: 1920 }, height: { ideal: 1080 } } },
           result => resolveCode(result),
           () => {}
         );
@@ -216,7 +216,7 @@ export default function CloudApp() {
             <p className="text-sm text-gray-300">Наведи камеру на код етикетки. Якщо сканування недоступне, введи код нижче.</p>
             <div className="relative rounded-xl overflow-hidden aspect-video bg-black">
               <div id="cloud-barcode-reader" className="w-full h-full"/>
-              <div className="absolute inset-[20%] border-2 border-fuchsia-400 rounded-xl pointer-events-none"/>
+              <div className="absolute inset-x-[5%] top-[15%] bottom-[15%] border-2 border-fuchsia-400 rounded-xl pointer-events-none"/>
             </div>
             {scannerError && <p role="alert" className="text-amber-300 text-sm">{scannerError}. Перевірте дозвіл камери в Safari → Налаштування вебсайту.</p>}
             <form onSubmit={e=>{e.preventDefault();resolveCode(scanInput)}} className="flex gap-2">
