@@ -64,7 +64,9 @@ export default function CloudApp() {
   const [notice, setNotice] = useState('');
   const [editing, setEditing] = useState(null);
   const [amount, setAmount] = useState('');
-  const [view, setView] = useState('stock');
+  const [view, setView] = useState('dashboard');
+  const [staff, setStaff] = useState([]);
+  const [staffLoading, setStaffLoading] = useState(false);
   const [category, setCategory] = useState('all');
   const [selectedProductId, setSelectedProductId] = useState(null);
   const [operationType, setOperationType] = useState('set');
@@ -77,6 +79,30 @@ export default function CloudApp() {
     { id: 'ostatni', title: t.other, emoji: '🧰' }
   ];
   const selectedProduct = products.find(p => p.id === selectedProductId);
+  const tr = (cs,ua,en) => lang === 'cs' ? cs : lang === 'ua' ? ua : en;
+  const navClass = (page) => join(css.button, view === page ? 'ring-2 ring-fuchsia-300 bg-fuchsia-600' : 'bg-white/10 hover:bg-white/20');
+  const nonZero = products.filter(p => Number(p.quantity) > 0).length;
+  const empty = products.length - nonZero;
+  const stockToday = history.filter(h => h.created_at && new Date(h.created_at).toDateString() === new Date().toDateString()).length;
+  const exportCsv = () => {
+    const fields = ['id', 'name', 'category', 'barcode', 'quantity', 'unit'];
+    const quoted = v => '"' + String(v ?? '').replace(/"/g,'""') + '"';
+    const csv = '\uFEFF' + [fields.join(';'), ...products.map(p => fields.map(f => quoted(p[f])).join(';'))].join('\r\n');
+    const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+    const localUrl = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = localUrl; a.download = 'Alemar_LOUIE_stock_' + new Date().toISOString().slice(0,10) + '.csv';
+    document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(localUrl),1000);
+  };
+  async function loadStaff() {
+    if (profile?.role !== 'admin') return;
+    setStaffLoading(true);
+    try {
+      const rows = await request('/rest/v1/profiles?select=id,name,role&order=name.asc');
+      setStaff(rows || []);
+    } catch(e) { setError(e.message); }
+    finally { setStaffLoading(false); }
+  }
+  useEffect(() => { if (view === 'users' && profile?.role === 'admin') loadStaff(); }, [view, profile?.role]);
   function openProduct(product) {
     setSelectedProductId(product.id);
     setOperationType('set');
@@ -317,9 +343,42 @@ export default function CloudApp() {
         </div> : <>
           <div className="flex gap-2 items-center flex-wrap">
             <span className="text-sm text-gray-300">{profile?.name || session.user?.email} • {profile?.role || t.noProfile}</span>
-            <button className={css.button} onClick={()=>setView('stock')}>{t.products}</button>
-            <button className={css.button} onClick={()=>setView('history')}><History size={16} className="inline"/> {t.history}</button>
+            <button className={navClass('dashboard')} onClick={()=>setView('dashboard')}>◫ {tr('Přehled','Огляд','Overview')}</button>
+            <button className={navClass('stock')} onClick={()=>setView('stock')}>📦 {t.products}</button>
+            <button className={css.button} title={t.scan} onClick={()=>{setView('stock');setError('');setScannerOpen(true)}}><ScanLine size={17} className="inline"/> {t.scan}</button>
+            <button className={navClass('history')} onClick={()=>setView('history')}><History size={16} className="inline"/> {t.history}</button>
+            {profile?.role === 'admin' && <button className={navClass('users')} onClick={()=>setView('users')}>👥 {tr('Uživatelé','Працівники','Users')}</button>}
+            <button className={css.button} onClick={exportCsv}>⬇ CSV</button>
           </div>
+          {view === 'dashboard' && <div className="space-y-5">
+            <h2 className="text-2xl font-bold">{tr('Přehled skladu','Огляд складу','Warehouse overview')}</h2>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              {[
+                [tr('Skladové položky','Позицій на складі','Products'),products.length,'📦'],
+                [tr('Nenulový stav','Є в наявності','In stock'),nonZero,'✅'],
+                [tr('Nulový stav','Нульовий залишок','Out of stock'),empty,'⚠️'],
+                [tr('Změny dnes','Операцій сьогодні','Changes today'),stockToday,'🕒']
+              ].map(([label,value,emoji])=><div key={label} className="rounded-2xl border border-white/10 bg-white/5 p-4"><div className="text-2xl">{emoji}</div><div className="text-3xl font-bold mt-2">{value}</div><div className="text-sm text-gray-300 mt-1">{label}</div></div>)}
+            </div>
+            <div className="grid md:grid-cols-2 gap-3">
+              <section className="rounded-2xl bg-white/5 border border-white/10 p-4 space-y-3">
+                <h3 className="text-lg font-semibold">{tr('Kategorie skladu','Категорії складу','Warehouse sections')}</h3>
+                {categories.filter(c=>c.id!=='all').map(c=><button key={c.id} onClick={()=>{setCategory(c.id);setView('stock')}} className="w-full flex items-center justify-between bg-white/5 hover:bg-white/10 rounded-xl p-3 text-left"><span>{c.emoji} {c.title}</span><span className="text-gray-300">{products.filter(p=>p.category===c.id).length}</span></button>)}
+              </section>
+              <section className="rounded-2xl bg-white/5 border border-white/10 p-4 space-y-3">
+                <div className="flex items-center justify-between gap-2"><h3 className="text-lg font-semibold">{tr('Poslední pohyby','Останні зміни','Recent activity')}</h3><button className="text-fuchsia-300 text-sm" onClick={()=>setView('history')}>{tr('Vše','Усі','All')} →</button></div>
+                {history.slice(0,6).map(h=><div key={h.id} className="border-b border-white/10 py-2"><div className="font-semibold text-sm">{h.product_id}</div><div className="text-sm text-gray-300">{h.old_quantity} → {h.new_quantity} ({h.change_amount > 0 ? '+' : ''}{h.change_amount})</div><div className="text-xs text-gray-400">{new Date(h.created_at).toLocaleString(lang==='cs'?'cs-CZ':lang==='ua'?'uk-UA':'en-US')}</div></div>)}
+                {history.length===0 && <p className="text-gray-400 text-sm">{tr('Žádné záznamy','Записів ще немає','No activity yet')}</p>}
+              </section>
+            </div>
+          </div>}
+          {view === 'users' && profile?.role === 'admin' && <section className="rounded-2xl border border-white/10 bg-white/5 p-4 space-y-3">
+            <h2 className="text-xl font-bold">{tr('Správa uživatelů','Керування працівниками','User management')}</h2>
+            <p className="text-sm text-gray-300">{tr('Přehled profilů. Pozvánky a deaktivace budou dostupné po nasazení zabezpečené administrátorské funkce.','Перегляд профілів. Запрошення та блокування стануть доступні після встановлення захищеної адмінфункції.','Profile overview. Invitations and blocking require a secure admin backend deployment.')}</p>
+            <button className={css.button} onClick={loadStaff} disabled={staffLoading}>{t.refresh}</button>
+            {staff.map(person=><div key={person.id} className="flex items-center justify-between gap-3 border border-white/10 rounded-xl p-3"><div><div className="font-semibold">{person.name || person.id}</div><div className="text-xs text-gray-400">{person.id===session.user?.id ? tr('Váš účet','Ваш акаунт','Your account') : person.id.slice(0,8)+'…'}</div></div><span className="text-xs rounded-full bg-white/10 px-3 py-1">{person.role}</span></div>)}
+            {!staffLoading && staff.length===0 && <p className="text-sm text-gray-400">{tr('Žádné dostupné profily','Немає доступних профілів','No profiles available')}</p>}
+          </section>}
           {view === 'stock' ? <>
             <div className="flex gap-2 items-center">
               <div className="relative grow"><Search size={18} className="absolute top-3.5 left-3 text-gray-400"/><input className={join(css.input,'pl-10')} placeholder={t.search} value={search} onChange={e=>setSearch(e.target.value)}/></div>
@@ -354,7 +413,8 @@ export default function CloudApp() {
               </div>}
             </section>)}
             </div>
-          </> : <div className="space-y-2">{history.map(h => <div key={h.id} className="p-3 bg-white/5 rounded-xl"><b>{h.product_id}</b> • {h.old_quantity} → {h.new_quantity} ({h.change_amount > 0 ? '+' : ''}{h.change_amount})<div className="text-xs text-gray-400">{h.action} • {new Date(h.created_at).toLocaleString()}</div></div>)}</div>}
+          </>}
+          {view === 'history' && <div className="space-y-2"><h2 className="text-xl font-bold">{t.history}</h2>{history.map(h => <div key={h.id} className="p-3 bg-white/5 rounded-xl"><b>{h.product_id}</b> • {h.old_quantity} → {h.new_quantity} ({h.change_amount > 0 ? '+' : ''}{h.change_amount})<div className="text-xs text-gray-400">{h.action} • {new Date(h.created_at).toLocaleString(lang==='cs'?'cs-CZ':lang==='ua'?'uk-UA':'en-US')}</div></div>)}</div>}
         </>}
       </main>
     </div>
