@@ -197,6 +197,24 @@ export default function CloudApp() {
     };
   }, [scannerOpen]);
 
+  async function scanPhoto(event) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    setScannerError('');
+    try {
+      const scanner = scannerRef.current;
+      if (!scanner) throw new Error('Сканер ще завантажується. Спробуй через секунду.');
+      // The camera and file decoder must not run at the same time.
+      if (scanner.getState?.() === 2) await scanner.stop();
+      const code = await scanner.scanFile(file, false);
+      resolveCode(code);
+    } catch (err) {
+      setScannerError('Не вдалося прочитати штрихкод із фото: ' + (err?.message || String(err)));
+    } finally {
+      event.target.value = '';
+    }
+  }
+
   function closeScanner() {
     setScannerOpen(false);
   }
@@ -219,6 +237,10 @@ export default function CloudApp() {
               <div className="absolute inset-[20%] border-2 border-fuchsia-400 rounded-xl pointer-events-none"/>
             </div>
             {scannerError && <p role="alert" className="text-amber-300 text-sm">{scannerError}. Перевірте дозвіл камери в Safari → Налаштування вебсайту.</p>}
+            <label className="block w-full text-center cursor-pointer p-3 rounded-xl border border-fuchsia-400 text-white">
+              📷 Вибрати фото штрихкоду з галереї
+              <input type="file" accept="image/*" onChange={scanPhoto} className="sr-only"/>
+            </label>
             <form onSubmit={e=>{e.preventDefault();resolveCode(scanInput)}} className="flex gap-2">
               <input className={css.input} value={scanInput} onChange={e=>setScanInput(e.target.value)} placeholder="Ввести код вручну" autoFocus/>
               <button type="submit" className={css.button}>Знайти</button>
