@@ -30,8 +30,8 @@ Deno.serve(async (req) => {
   const login = surname.toLocaleLowerCase('cs-CZ').replace(/\s+/g, '');
   const password = String(payload.password || '');
   const code = String(payload.code || '').trim();
-  if (!/^[\p{L}\p{M}0-9-]{2,40}$/u.test(login) || password.length < 10 || password.length > 128 || !/^[a-f0-9]{36}$/.test(code))
-    return json(400, { error: 'Check surname, password (at least 10 characters) and invite code' });
+  if (!/^[\p{L}\p{M}0-9-]{2,40}$/u.test(login) || password.length < 4 || password.length > 128 || !/^[a-f0-9]{36}$/.test(code))
+    return json(400, { error: 'Check surname, password (at least 4 characters) and invite code' });
   const db = createClient(projectUrl, serviceKey, { auth: { autoRefreshToken: false, persistSession: false } });
   const codeHash = await digest(code);
   const { data: invites, error: inviteError } = await db.from('worker_invitations').select('id').eq('code_hash', codeHash)
